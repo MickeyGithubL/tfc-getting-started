@@ -16,26 +16,68 @@
 # If you're looking for the configuration for the remote backend, you can find that
 # in backend.tf.
 
+module "fakewebservice" {
+  source = "./modules/fakewebservice"
 
-resource "fakewebservices_vpc" "primary_vpc" {
-  name       = "Primary VPC"
-  cidr_block = "0.0.0.0/1"
+  vpc_name       = "Primary VPC"
+  vpc_cidr_block = "0.0.0.0/1"
+  server_count   = 2
+  server_type    = "t2.micro"
+  lb_name        = "Primary Load Balancer"
+  db_name        = "Production DB"
+  db_size        = 256
 }
 
-resource "fakewebservices_server" "servers" {
-  count = 2
-
-  name = "Server ${count.index + 1}"
-  type = "t2.micro"
-  vpc  = fakewebservices_vpc.primary_vpc.name
+# Moved blocks to indicate resources moved to the module
+moved {
+  from = fakewebservices_vpc.primary_vpc
+  to   = module.fakewebservice.fakewebservices_vpc.primary_vpc
 }
 
-resource "fakewebservices_load_balancer" "primary_lb" {
-  name    = "Primary Load Balancer"
-  servers = fakewebservices_server.servers[*].name
+moved {
+  from = fakewebservices_server.servers
+  to   = module.fakewebservice.fakewebservices_server.servers
 }
 
-resource "fakewebservices_database" "prod_db" {
-  name = "Production DB"
-  size = 256
+moved {
+  from = fakewebservices_load_balancer.primary_lb
+  to   = module.fakewebservice.fakewebservices_load_balancer.primary_lb
+}
+
+moved {
+  from = fakewebservices_database.prod_db
+  to   = module.fakewebservice.fakewebservices_database.prod_db
+}
+
+# Outputs from the module
+output "vpc_id" {
+  value = module.fakewebservice.vpc_id
+}
+
+output "vpc_name" {
+  value = module.fakewebservice.vpc_name
+}
+
+output "server_names" {
+  value = module.fakewebservice.server_names
+}
+
+output "server_ids" {
+  value = module.fakewebservice.server_ids
+}
+
+output "load_balancer_name" {
+  value = module.fakewebservice.load_balancer_name
+}
+
+output "load_balancer_id" {
+  value = module.fakewebservice.load_balancer_id
+}
+
+output "database_name" {
+  value = module.fakewebservice.database_name
+}
+
+output "database_id" {
+  value = module.fakewebservice.database_id
 }
