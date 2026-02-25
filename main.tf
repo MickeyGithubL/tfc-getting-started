@@ -39,6 +39,19 @@ moved {
   to   = module.fakewebservice.fakewebservices_server.servers
 }
 
+resource "fakewebservices_server" "server-3" {
+  name = "Server 3"
+  type = "t2.macro"
+  vpc  = fakewebservices_vpc.primary_vpc.name
+}
+
+resource "fakewebservices_server" "server-4" {
+  name = "Server 4"
+  type = "t2.macro"
+  vpc  = fakewebservices_vpc.primary_vpc.name
+}
+}
+
 moved {
   from = fakewebservices_load_balancer.primary_lb
   to   = module.fakewebservice.fakewebservices_load_balancer.primary_lb
@@ -47,6 +60,11 @@ moved {
 moved {
   from = fakewebservices_database.prod_db
   to   = module.fakewebservice.fakewebservices_database.prod_db
+}
+
+resource "fakewebservices_load_balancer" "f5" {
+  name    = "F5 Load Balancer"
+  servers = concat(fakewebservices_server.servers[*].name, [fakewebservices_server.server-3.name, fakewebservices_server.server-4.name])
 }
 
 # Outputs from the module
@@ -80,4 +98,29 @@ output "database_name" {
 
 output "database_id" {
   value = module.fakewebservice.database_id
+}
+
+resource "fakewebservices_load_balancer" "f5" {
+  name    = "F5 Load Balancer"
+  servers = concat(fakewebservices_server.servers[*].name, [fakewebservices_server.server-3.name, fakewebservices_server.server-4.name])
+}
+
+output "vpc_name" {
+  description = "The name of the primary VPC"
+  value       = fakewebservices_vpc.primary_vpc.name
+}
+
+output "server_names" {
+  description = "The names of all servers"
+  value       = concat(fakewebservices_server.servers[*].name, [fakewebservices_server.server-3.name, fakewebservices_server.server-4.name])
+}
+
+output "load_balancer_names" {
+  description = "The names of the load balancers"
+  value       = [fakewebservices_load_balancer.primary_lb.name, fakewebservices_load_balancer.f5.name]
+}
+
+output "database_name" {
+  description = "The name of the production database"
+  value       = fakewebservices_database.prod_db.name
 }
