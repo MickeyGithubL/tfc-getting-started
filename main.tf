@@ -21,7 +21,7 @@ module "fakewebservice" {
 
   vpc_name       = "Primary VPC"
   vpc_cidr_block = "0.0.0.0/1"
-  server_count   = 2
+  server_count   = 3
   server_type    = "t2.micro"
   lb_name        = "Primary Load Balancer"
   db_name        = "Production DB"
@@ -49,6 +49,16 @@ resource "fakewebservices_server" "server-4" {
   type = "t2.macro" 
 }
 
+resource "fakewebservices_server" "server-5" {
+  name = "Server 5" 
+  type = "t2.small" 
+}
+
+resource "fakewebservices_server" "server-6" {
+  name = "Server 6" 
+  type = "t2.small" 
+}
+
 moved {
   from = fakewebservices_load_balancer.primary_lb
   to   = module.fakewebservice.fakewebservices_load_balancer.primary_lb
@@ -59,9 +69,19 @@ moved {
   to   = module.fakewebservice.fakewebservices_database.prod_db
 }
 
+resource "fakewebservices_database" "staging_db" {
+  name = "Staging DB"
+  size = 128
+}
+
 resource "fakewebservices_load_balancer" "f5" {
   name    = "F5 Load Balancer"
-  servers = concat(module.fakewebservice.server_names, [fakewebservices_server.server-3.name, fakewebservices_server.server-4.name])
+  servers = [fakewebservices_server.server-3.name, fakewebservices_server.server-4.name, fakewebservices_server.server-5.name, fakewebservices_server.server-6.name]
+}
+
+resource "fakewebservices_load_balancer" "secondary_lb" {
+  name    = "Secondary Load Balancer"
+  servers = [fakewebservices_server.server-5.name, fakewebservices_server.server-6.name]
 }
 
 # Outputs from the module
@@ -95,4 +115,20 @@ output "database_name" {
 
 output "database_id" {
   value = module.fakewebservice.database_id
+}
+
+output "staging_database_name" {
+  value = fakewebservices_database.staging_db.name
+}
+
+output "staging_database_id" {
+  value = fakewebservices_database.staging_db.id
+}
+
+output "secondary_load_balancer_name" {
+  value = fakewebservices_load_balancer.secondary_lb.name
+}
+
+output "secondary_load_balancer_id" {
+  value = fakewebservices_load_balancer.secondary_lb.id
 }
